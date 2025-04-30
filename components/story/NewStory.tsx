@@ -5,6 +5,8 @@ import MediumEditor from "medium-editor";
 import "medium-editor/dist/css/medium-editor.css";
 import "medium-editor/dist/css/themes/default.css";
 import "./new_story.css";
+import { createRoot } from "react-dom/client";
+import { uploadImage } from "../../actions/cloudinary";
 
 const NewStory = () => {
   const contentEditableRef = React.useRef<HTMLDivElement | null>(null);
@@ -17,7 +19,32 @@ const NewStory = () => {
     top: 0,
     left: 0,
   });
-  
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const insertImageComp = () => {
+    fileInputRef.current?.click();
+  };
+
+  // This function is used to handle the file input change event.
+  // It creates a local URL for the selected image file and renders the ImageComp component with that URL.
+  // It also sets the openTools state to false to hide the tools menu.
+  const handleFileInputChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setOpenTools(false);
+      const localImageUrl = URL.createObjectURL(file);
+      const imageComponent = <ImageComp imageUrl={localImageUrl} file={file} />;
+
+      const wrapperDiv = document.createElement("div");
+      const root = createRoot(wrapperDiv);
+      root.render(imageComponent);
+
+      contentEditableRef.current?.appendChild(wrapperDiv);
+    }
+  };
+
   // This function is used to get the caret position in the contentEditable div
   // and set the position of the button accordingly.
   const getCaretPosition = () => {
@@ -30,8 +57,8 @@ const NewStory = () => {
         const range = selection.getRangeAt(0);
         const rect = range.getClientRects()[0];
         if (rect) {
-          x = rect.left;
-          y = rect.top - 80;
+          x = rect.left + window.scrollX;
+          y = rect.top + window.scrollY - 80;
         }
       }
     }
@@ -113,27 +140,29 @@ const NewStory = () => {
           <span
             className={`border-[1.5px] border-green-500 rounded-full block p-[6px] ${
               openTools ? "scale-100 visible" : "scale-0 invisible"
-            } ease-linear duration-100 bg-white`}
+            } ease-linear duration-100 bg-white cursor-pointer`}
+            onClick={insertImageComp}
           >
             <Image size={20} className="opacity-60 text-green-800" />
             <input
               type="file"
               accept="image/*"
               style={{ display: "none" }}
-              ref={FileInputRef}
+              ref={fileInputRef}
+              onChange={handleFileInputChange}
             />
           </span>
           <span
             className={`border-[1.5px] border-green-500 rounded-full block p-[6px] ${
               openTools ? "scale-100 visible" : "scale-0 invisible"
-            } ease-linear duration-100 delay-75 bg-white`}
+            } ease-linear duration-100 delay-75 bg-white cursor-pointer`}
           >
             <MoreHorizontal size={20} className="opacity-60 text-green-800" />
           </span>
           <span
             className={`border-[1.5px] border-green-500 rounded-full block p-[6px] ${
               openTools ? "scale-100 visible" : "scale-0 invisible"
-            } ease-linear duration-100 delay-100 bg-white`}
+            } ease-linear duration-100 delay-100 bg-white cursor-pointer`}
           >
             <Code size={20} className="opacity-60 text-green-800" />
           </span>
@@ -144,3 +173,39 @@ const NewStory = () => {
 };
 
 export default NewStory;
+
+const ImageComp = ({ imageUrl, file }: { imageUrl: string; file: File }) => {
+  const [currentImageUrl, setCurrentImageUrl] =
+    React.useState<string>(imageUrl);
+
+  const updateImageUrl = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      uploadImage(formData).then(
+        (secureImageUrl) => setCurrentImageUrl(secureImageUrl) // Set the secure URL to the state
+      );
+    } catch (error) {
+      console.error("Error uploading image:", error);
+    }
+  };
+
+  useEffect(() => {
+    updateImageUrl();
+  }, [imageUrl]);
+  return (
+    <div className="py-3">
+      <div>
+        <img
+          src={currentImageUrl}
+          alt={currentImageUrl}
+          className="max-w-full h-[450px]"
+        />
+        <div className="text-center text-sm max-w-md mx-auto">
+          <p data-p-placeholder="Type caption for your image"></p>
+        </div>
+      </div>
+      <p data-p-placeholder="..."></p>
+    </div>
+  );
+};

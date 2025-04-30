@@ -65,6 +65,18 @@ const NewStory = () => {
     return { x, y };
   };
 
+  // This function is used to insert a divider component into the contentEditable div.
+  const insertDivider = () => {
+    const dividerComponent = <Divider />;
+    setOpenTools(false);
+
+    const wrapperDiv = document.createElement("div");
+    const root = createRoot(wrapperDiv);
+    root.render(dividerComponent);
+
+    contentEditableRef.current?.appendChild(wrapperDiv);
+  };
+
   useEffect(() => {
     const handleInput = () => {
       const { y } = getCaretPosition();
@@ -153,6 +165,7 @@ const NewStory = () => {
             />
           </span>
           <span
+            onClick={insertDivider}
             className={`border-[1.5px] border-green-500 rounded-full block p-[6px] ${
               openTools ? "scale-100 visible" : "scale-0 invisible"
             } ease-linear duration-100 delay-75 bg-white cursor-pointer`}
@@ -174,6 +187,7 @@ const NewStory = () => {
 
 export default NewStory;
 
+// add image to cloudinary and get the secure URL component
 const ImageComp = ({ imageUrl, file }: { imageUrl: string; file: File }) => {
   const [currentImageUrl, setCurrentImageUrl] =
     React.useState<string>(imageUrl);
@@ -209,3 +223,19 @@ const ImageComp = ({ imageUrl, file }: { imageUrl: string; file: File }) => {
     </div>
   );
 };
+
+// Divider component to separate the content in the editor
+const Divider = () => {
+  return (
+    <div className="py-3 w-full">
+      <div
+        className="text-center flex items-center justify-center "
+        contentEditable={false}
+      >
+        <MoreHorizontal size={32} />
+      </div>
+      <p data-p-placeholder="Write your text ..."></p>
+    </div>
+  );
+};
+

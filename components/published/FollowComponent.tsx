@@ -4,7 +4,7 @@ type Props = {
   authorId: string;
 };
 const FollowComponent = ({ authorId }: Props) => {
-  return <div></div>;
+  return <span></span>;
 };
 
 export default FollowComponent;

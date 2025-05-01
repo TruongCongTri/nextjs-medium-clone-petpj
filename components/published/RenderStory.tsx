@@ -4,11 +4,12 @@ import React from "react";
 import FollowComponent from "./FollowComponent";
 import { MoreHorizontal } from "lucide-react";
 
-import "highlight.js/styles/github.css"
+import "highlight.js/styles/github.css";
 import ClapComponent from "./ClapComponent";
 import CommentComponent from "./CommentComponent";
 import SaveComponent from "./SaveComponent";
 import ShareComponent from "./ShareComponent";
+import { clapCount, clapCountByUser } from "../../actions/clap";
 type Props = {
   authorFirstName: string | null;
   authorLastName: string | null;
@@ -16,7 +17,7 @@ type Props = {
   publishedStory: Story;
 };
 
-const RenderStory = ({
+const RenderStory = async ({
   authorFirstName,
   authorLastName,
   authorImage,
@@ -33,6 +34,10 @@ const RenderStory = ({
 
   const h1ElementWithoutTag = stripHtmlTags(h1Element);
 
+  //
+  const clapCounts = await clapCount(publishedStory.id);
+  const userClapCounts = await clapCountByUser(publishedStory.id);
+
   return (
     <div className="flex items-center justify-center mt-6 max-w-[800px] mx-auto">
       <div>
@@ -48,7 +53,7 @@ const RenderStory = ({
           <div className="text-sm">
             <p>
               {authorFirstName} {authorLastName}{" "}
-              {/* <FollowComponent authorId={publishedStory.authorId} /> */}
+              <FollowComponent authorId={publishedStory.authorId} />
             </p>
             <p className="opacity-60">
               Published on{" "}
@@ -63,9 +68,9 @@ const RenderStory = ({
         <div className="border-y-[1px] border-neutral-200 py-3 mt-6 flex items-center justify-between px-3">
           <div className="flex items-center space-x-4">
             <ClapComponent
-            //   storyId={publishedStory.id}
-            //   clapCount={clapCounts}
-            //   userClaps={userClaps}
+              storyId={publishedStory.id}
+              clapCount={clapCounts}
+              userClapCount={userClapCounts}
             />
             <CommentComponent
             //   NumberCommnets={

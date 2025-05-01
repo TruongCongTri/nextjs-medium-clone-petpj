@@ -1,28 +1,71 @@
 "use client";
 import { Plus, Image, MoreHorizontal, Code } from "lucide-react";
-import React, { useEffect } from "react";
+import { createRoot } from "react-dom/client";
+import React, { useEffect, useRef, useState } from "react";
 import MediumEditor from "medium-editor";
 import "medium-editor/dist/css/medium-editor.css";
 import "medium-editor/dist/css/themes/default.css";
 import "./new_story.css";
-import { createRoot } from "react-dom/client";
-import "highlight.js/styles/github.css"; // Import the desired theme CSS
+import "highlight.js/styles/github.css";
 import CodeBlock from "./CodeBlock";
 import Divider from "./Divider";
 import ImageBlock from "./ImageBlock";
+import axios from "axios";
 
-const NewStory = () => {
-  const contentEditableRef = React.useRef<HTMLDivElement | null>(null);
+type Props = {
+  storyId: string;
+};
+const NewStory = ({ storyId }: Props) => {
+  const contentEditableRef = useRef<HTMLDivElement | null>(null);
 
-  const [openTools, setOpenTools] = React.useState<boolean>(false);
-  const [buttonPosition, setButtonPosition] = React.useState<{
+  const [openTools, setOpenTools] = useState<boolean>(false);
+  const [buttonPosition, setButtonPosition] = useState<{
     top: number;
     left: number;
   }>({
     top: 0,
     left: 0,
   });
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [saving, setSaving] = useState<boolean>(false);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  //
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function debounce<T extends (...args: any[]) => any>(
+    func: T,
+    delay: number
+  ): (...args: Parameters<T>) => void {
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    return function (this: ThisParameterType<T>, ...args: Parameters<T>): void {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func.apply(this, args);
+      }, delay);
+    };
+  }
+
+  const debouncedHandleSave = useRef(
+    debounce(() => {
+      handleSave();
+    }, 1000)
+  ).current;
+
+  const handleSave = async () => {
+    const content = contentEditableRef.current?.innerHTML;
+    setSaving(true);
+    try {
+      await axios.patch("/api/new-story", {
+        storyId,
+        content,
+      });
+      console.log('"Saved successfully");');
+    } catch (error) {
+      console.log(`"Error saving story: ${error}`);
+    }
+    setSaving(false);
+  };
 
   const insertImageComp = () => {
     fileInputRef.current?.click();
@@ -37,9 +80,11 @@ const NewStory = () => {
     const file = event.target.files?.[0];
     if (file) {
       setOpenTools(false);
+
       const localImageUrl = URL.createObjectURL(file);
+
       const imageComponent = (
-        <ImageBlock imageUrl={localImageUrl} file={file} />
+        <ImageBlock imageUrl={localImageUrl} file={file} handleSave={handleSave}/>
       );
 
       const wrapperDiv = document.createElement("div");
@@ -52,26 +97,31 @@ const NewStory = () => {
 
   // This function is used to insert a divider component into the contentEditable div.
   const insertDivider = () => {
-    const dividerComponent = <Divider />;
+    const dividerComp = <Divider />;
     setOpenTools(false);
 
     const wrapperDiv = document.createElement("div");
     const root = createRoot(wrapperDiv);
-    root.render(dividerComponent);
+    root.render(dividerComp);
 
     contentEditableRef.current?.appendChild(wrapperDiv);
+    // auto save for the divider component
+    handleSave();
   };
 
   // This function is used to insert a code block component into the contentEditable div.
   const insertCodeBlock = () => {
-    const codeBlockComponent = <CodeBlock />;
+    const CodeBlockComp = <CodeBlock />;
     setOpenTools(false);
 
     const wrapperDiv = document.createElement("div");
     const root = createRoot(wrapperDiv);
-    root.render(codeBlockComponent);
+    root.render(CodeBlockComp);
 
     contentEditableRef.current?.appendChild(wrapperDiv);
+
+    // will auto save when the user types in the code block
+    // no need to save for the code block component
   };
 
   // This function is used to get the caret position in the contentEditable div
@@ -79,26 +129,32 @@ const NewStory = () => {
   const getCaretPosition = () => {
     let x = 0;
     let y = 0;
+
     const isSupported = typeof window.getSelection !== "undefined";
+
     if (isSupported) {
       const selection = window.getSelection() as Selection;
-      if (selection && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
+      if (selection?.rangeCount > 0) {
+        const range = selection.getRangeAt(0).cloneRange();
         const rect = range.getClientRects()[0];
         if (rect) {
-          x = rect.left + window.scrollX;
+          x = rect.left + window.screenX;
           y = rect.top + window.scrollY - 80;
         }
       }
     }
+
     return { x, y };
   };
+
   // This effect is used to set the position of the button when the user types in the contentEditable div.
   useEffect(() => {
     const handleInput = () => {
       const { y } = getCaretPosition();
       setButtonPosition({ top: y, left: -50 });
+      debouncedHandleSave()
     };
+
     contentEditableRef.current?.addEventListener("input", handleInput);
   }, []);
 
@@ -131,6 +187,9 @@ const NewStory = () => {
       className="max-w-[800px] mx-auto relative font-mono mt-5"
       id="container"
     >
+      <p className={`absolute -top-[60px] opacity-30`}>
+        {saving ? "saving..." : "saved"}
+      </p>
       <div
         id="editable"
         ref={contentEditableRef}
@@ -207,7 +266,7 @@ const NewStory = () => {
 export default NewStory;
 
 // add image to cloudinary and get the secure URL component
-// const ImageComp = ({ imageUrl, file }: { imageUrl: string; file: File }) => {
+// const ImageBlock = ({ imageUrl, file }: { imageUrl: string; file: File }) => {
 //   const [currentImageUrl, setCurrentImageUrl] =
 //     React.useState<string>(imageUrl);
 
@@ -215,8 +274,8 @@ export default NewStory;
 //     try {
 //       const formData = new FormData();
 //       formData.append("file", file);
-//       uploadImage(formData).then(
-//         (secureImageUrl) => setCurrentImageUrl(secureImageUrl) // Set the secure URL to the state
+//       imageUpload(formData).then(
+//         (secureImageUrl) => setCurrentImageUrl(secureImageUrl)
 //       );
 //     } catch (error) {
 //       console.error("Error uploading image:", error);

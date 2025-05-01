@@ -25,3 +25,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.error();
   }
 }
+
+// upto save function
+export async function PATCH(request: NextRequest) {
+  const body = await request.json();
+  const { userId }: { userId: string | null } = await auth();
+  if (!userId) {
+    throw new Error("Unauthorized");
+    // return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  const { storyId, content } = body;
+  if (!storyId || !content) {
+    throw new Error("Missing fields");
+  }
+
+  const story = await prisma.story.findUnique({
+    where: { id: storyId },
+  });
+
+  if (!story) {
+    throw new Error("Story not found");
+  }
+
+  try {
+    await prisma.story.update({
+      where: { id: storyId },
+      data: {
+        content,
+      },
+    });
+
+    return NextResponse.json(
+      { message: "Successfully save the story" },
+      { status: 200 }
+    );
+  } catch (error) {
+    return NextResponse.error();
+  }
+}

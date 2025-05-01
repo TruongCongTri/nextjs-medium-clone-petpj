@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const uploadImage = async (formData: FormData) => {
+export const imageUpload = async (formData: FormData) => {
   const file = formData.get("file") as File;
 
   formData.append(
@@ -9,8 +9,9 @@ export const uploadImage = async (formData: FormData) => {
   );
 
   if (!file) {
-    throw new Error("Image not found");
+    throw new Error("Image not found to upload");
   }
+
   const cloudinaryUploadUrl = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`;
 
   try {
@@ -22,7 +23,7 @@ export const uploadImage = async (formData: FormData) => {
 
     return response.data.url;
   } catch (error) {
-    console.error("Error uploading image to Cloudinary:", error);
-    throw new Error("Failed to upload image");
+    console.log("Error uploading to cloudinary", error);
+    throw error;
   }
 };

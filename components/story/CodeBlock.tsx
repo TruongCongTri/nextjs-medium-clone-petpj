@@ -1,11 +1,11 @@
-'use client';
+"use client";
 import hljs from "highlight.js";
 import { ClipboardPaste } from "lucide-react";
 import React, { useState, useEffect } from "react";
 
 export default function CodeBlock() {
-  const [language, setLanguage] = React.useState<string>("javascript");
-  const [code, setCode] = React.useState<string>("");
+  const [language, setLanguage] = useState<string>("javascript");
+  const [code, setCode] = useState<string>("");
   const [highlightedCode, setHighlightedCode] = useState<string>("");
 
   console.log(code);
@@ -38,12 +38,11 @@ export default function CodeBlock() {
       ignoreIllegals: true,
     }).value;
     setHighlightedCode(highlighted);
-    // handleSave();
   }, [language, code, highlightedCode]);
 
   return (
     <div className="w-full">
-      <div className="prose w-full relative bg-gray-50 rounded-sm p-5 focus:outline-none">
+      <div className="w-full relative bg-stone-100 rounded-sm p-5 focus:outline-none">
         <div>
           <select
             contentEditable={false}
@@ -57,8 +56,12 @@ export default function CodeBlock() {
           </select>
         </div>
         <textarea
-          className="focus:outline-none p-2 w-full mt-4 bg-white"
-          onChange={handleCodeChange}
+          className="focus:outline-none p-2 w-full mt-4"
+          onChange={(e) => {
+            e.preventDefault();
+            handleCodeChange(e);
+          }}
+          onPaste={handlePaste}
         />
         <button
           onClick={handlePaste}

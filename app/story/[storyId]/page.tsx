@@ -1,4 +1,4 @@
-import Navbar from "@/components/layouts/Navbar";
+import NavbarStory from "@/components/story/NavbarStory";
 import NewStory from "@/components/story/NewStory";
 import React from "react";
 
@@ -12,8 +12,8 @@ export default async function SingleStoryPage({
 
   return (
     <div className="max-w-[1000px] mx-auto">
-      <Navbar />
-      <NewStory />
+      <NavbarStory />
+      <NewStory storyId={storyId} />
     </div>
   );
 }

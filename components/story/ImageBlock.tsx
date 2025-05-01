@@ -1,39 +1,49 @@
-'use client'
-import { uploadImage } from '@/actions/cloudinary';
-import React, {useEffect} from 'react'
+"use client";
+import { imageUpload } from "@/actions/cloudinary";
+import React, { useEffect, useState } from "react";
 
-export default function ImageBlock({ imageUrl, file }: { imageUrl: string; file: File }) {
-  const [currentImageUrl, setCurrentImageUrl] =
-      React.useState<string>(imageUrl);
+export default function ImageBlock({
+  imageUrl,
+  file,
+  handleSave,
+}: {
+  imageUrl: string;
+  file: File;
+  handleSave: () => void;
+}) {
+  const [currentImageUrl, setCurrentImageUrl] = useState<string>(imageUrl);
+
+  const updateImageUrl = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      imageUpload(formData).then(
+        (secureImageUrl) => setCurrentImageUrl(secureImageUrl) // Set the secure URL to the state
+      );
+    } catch (error) {
+      console.log("Error uplaoding the image", error);
+    }
+  };
+
+  useEffect(() => {
+    updateImageUrl().then(() => {
+      handleSave(); // Call the handleSave function after the image is uploaded
+    });
+  }, [imageUrl]);
   
-    const updateImageUrl = async () => {
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-        uploadImage(formData).then(
-          (secureImageUrl) => setCurrentImageUrl(secureImageUrl) // Set the secure URL to the state
-        );
-      } catch (error) {
-        console.error("Error uploading image:", error);
-      }
-    };
-  
-    useEffect(() => {
-      updateImageUrl();
-    }, [imageUrl]);
-    return (
-      <div className="py-3">
-        <div>
-          <img
-            src={currentImageUrl}
-            alt={currentImageUrl}
-            className="max-w-full h-[450px]"
-          />
-          <div className="text-center text-sm max-w-md mx-auto">
-            <p data-p-placeholder="Type caption for your image"></p>
-          </div>
+  return (
+    <div className="py-3">
+      <div>
+        <img
+          src={currentImageUrl}
+          alt="Image"
+          className="max-w-full h-[450px]"
+        />
+        <div className="text-center text-sm max-w-md mx-auto">
+          <p data-p-placeholder="Type caption for your image"></p>
         </div>
-        <p data-p-placeholder="..."></p>
       </div>
-    );
+      <p data-p-placeholder="..."></p>
+    </div>
+  );
 }

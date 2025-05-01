@@ -1,37 +1,39 @@
 "use client";
-import { Plus, Image, MoreHorizontal, Code } from "lucide-react";
+import {
+  ClipboardPaste,
+  Code,
+  Image,
+  MoreHorizontal,
+  Plus,
+} from "lucide-react";
 import { createRoot } from "react-dom/client";
 import React, { useEffect, useRef, useState } from "react";
 import MediumEditor from "medium-editor";
 import "medium-editor/dist/css/medium-editor.css";
 import "medium-editor/dist/css/themes/default.css";
 import "./new_story.css";
+import { imageUpload } from "@/actions/cloudinary";
+import hljs from "highlight.js";
 import "highlight.js/styles/github.css";
-import CodeBlock from "./CodeBlock";
-import Divider from "./Divider";
-import ImageBlock from "./ImageBlock";
 import axios from "axios";
+import { getStoryById } from "@/actions/getStories";
+import { Story } from "@prisma/client";
 
 type Props = {
   storyId: string;
+  storyContent: string | null | undefined;
 };
-const NewStory = ({ storyId }: Props) => {
-  const contentEditableRef = useRef<HTMLDivElement | null>(null);
 
+const NewStory = ({ storyId, storyContent }: Props) => {
+  const contentEditabeRef = useRef<HTMLDivElement | null>(null);
   const [openTools, setOpenTools] = useState<boolean>(false);
-  const [buttonPosition, setButtonPosition] = useState<{
+  const [buttonPosition, setbuttonPosition] = useState<{
     top: number;
     left: number;
-  }>({
-    top: 0,
-    left: 0,
-  });
+  }>({ top: 0, left: 0 });
   const [saving, setSaving] = useState<boolean>(false);
-
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  //
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function debounce<T extends (...args: any[]) => any>(
     func: T,
     delay: number
@@ -53,27 +55,24 @@ const NewStory = ({ storyId }: Props) => {
   ).current;
 
   const handleSave = async () => {
-    const content = contentEditableRef.current?.innerHTML;
+    const content = contentEditabeRef.current?.innerHTML;
     setSaving(true);
+
     try {
       await axios.patch("/api/new-story", {
         storyId,
         content,
       });
-      console.log('"Saved successfully");');
+      console.log("saved");
     } catch (error) {
-      console.log(`"Error saving story: ${error}`);
+      console.log("Error in saving");
     }
     setSaving(false);
   };
 
-  const insertImageComp = () => {
+  const InserImageComp = () => {
     fileInputRef.current?.click();
   };
-
-  // This function is used to handle the file input change event.
-  // It creates a local URL for the selected image file and renders the ImageComp component with that URL.
-  // It also sets the openTools state to false to hide the tools menu.
   const handleFileInputChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -83,49 +82,41 @@ const NewStory = ({ storyId }: Props) => {
 
       const localImageUrl = URL.createObjectURL(file);
 
-      const imageComponent = (
-        <ImageBlock imageUrl={localImageUrl} file={file} handleSave={handleSave}/>
+      const ImageComponent = (
+        <ImageComp
+          imageUrl={localImageUrl}
+          file={file}
+          handleSave={debouncedHandleSave}
+        />
       );
 
       const wrapperDiv = document.createElement("div");
       const root = createRoot(wrapperDiv);
-      root.render(imageComponent);
+      root.render(ImageComponent);
 
-      contentEditableRef.current?.appendChild(wrapperDiv);
+      contentEditabeRef.current?.appendChild(wrapperDiv);
     }
   };
 
-  // This function is used to insert a divider component into the contentEditable div.
-  const insertDivider = () => {
-    const dividerComp = <Divider />;
+  const InserDivider = () => {
+    const DividerComp = <Divider />;
     setOpenTools(false);
-
     const wrapperDiv = document.createElement("div");
     const root = createRoot(wrapperDiv);
-    root.render(dividerComp);
-
-    contentEditableRef.current?.appendChild(wrapperDiv);
-    // auto save for the divider component
+    root.render(DividerComp);
+    contentEditabeRef.current?.appendChild(wrapperDiv);
     handleSave();
   };
 
-  // This function is used to insert a code block component into the contentEditable div.
-  const insertCodeBlock = () => {
-    const CodeBlockComp = <CodeBlock />;
+  const InserCodeBlock = () => {
+    const CodeBlockComp = <CodeBlock handleSave={debouncedHandleSave} />;
     setOpenTools(false);
-
     const wrapperDiv = document.createElement("div");
     const root = createRoot(wrapperDiv);
     root.render(CodeBlockComp);
-
-    contentEditableRef.current?.appendChild(wrapperDiv);
-
-    // will auto save when the user types in the code block
-    // no need to save for the code block component
+    contentEditabeRef.current?.appendChild(wrapperDiv);
   };
 
-  // This function is used to get the caret position in the contentEditable div
-  // and set the position of the button accordingly.
   const getCaretPosition = () => {
     let x = 0;
     let y = 0;
@@ -147,18 +138,17 @@ const NewStory = ({ storyId }: Props) => {
     return { x, y };
   };
 
-  // This effect is used to set the position of the button when the user types in the contentEditable div.
   useEffect(() => {
     const handleInput = () => {
-      const { y } = getCaretPosition();
-      setButtonPosition({ top: y, left: -50 });
-      debouncedHandleSave()
+      const { x, y } = getCaretPosition();
+      setbuttonPosition({ top: y, left: -50 });
+
+      debouncedHandleSave();
     };
 
-    contentEditableRef.current?.addEventListener("input", handleInput);
+    contentEditabeRef.current?.addEventListener("input", handleInput);
   }, []);
 
-  // This effect is used to set the functions for the contentEditable div and initialize the MediumEditor.
   useEffect(() => {
     if (typeof window.document !== "undefined") {
       const editor = new MediumEditor(".editable", {
@@ -182,24 +172,52 @@ const NewStory = ({ storyId }: Props) => {
     }
   }, []);
 
+  const [Story, setStory] = useState<Story>();
+  const [loading, setLoading] = useState<boolean>(false);
+  useEffect(() => {
+    const fetchStoryById = async () => {
+      setLoading(true);
+      try {
+        const story = await getStoryById(storyId);
+        if (story.response) setStory(story.response);
+      } catch (error) {
+        console.log(error);
+      }
+      setLoading(false);
+    };
+
+    fetchStoryById();
+  }, []);
+
+  console.log(Story);
+
   return (
     <main
-      className="max-w-[800px] mx-auto relative font-mono mt-5"
       id="container"
+      className="max-w-[800px] mx-auto relative font-mono mt-8"
     >
-      <p className={`absolute -top-[60px] opacity-30`}>
+      <p className="absolute -top-[72px] opacity-30">
         {saving ? "saving..." : "saved"}
       </p>
       <div
         id="editable"
-        ref={contentEditableRef}
-        contentEditable={true}
-        suppressContentEditableWarning={true}
+        ref={contentEditabeRef}
+        contentEditable
+        suppressContentEditableWarning
         className="outline-none focus:outline-none editable max-w-[800px] prose"
         style={{ whiteSpace: "pre-line" }}
       >
-        <h1 className="font-medium" data-h1-placeholder="Title"></h1>
-        <p className="" data-p-placeholder="Write your story ..."></p>
+        {storyContent ? (
+          <div dangerouslySetInnerHTML={{ __html: storyContent }}></div>
+        ) : (
+          <div>
+            <h1
+              className="font-medium"
+              data-h1-placeholder="New Story Title"
+            ></h1>
+            <p data-p-placeholder="Write your story ..."></p>
+          </div>
+        )}
       </div>
       <div
         className={`z-10 ${buttonPosition.top === 0 ? "hidden" : ""}`}
@@ -210,29 +228,29 @@ const NewStory = ({ storyId }: Props) => {
         }}
       >
         <button
+          onClick={() => setOpenTools(!openTools)}
           id="tooltip"
           className="border-[1px] border-neutral-500 p-1 rounded-full inline-block"
-          onClick={() => setOpenTools(!openTools)}
         >
           <Plus
             className={`duration-300 ease-linear ${
-              openTools ? "rotate-135" : ""
+              openTools ? "rotate-90" : ""
             }`}
           />
         </button>
         <div
           id="tool"
-          className={`flex items-center space-x-4 absolute top-0 left-14 ${
+          className={`flex items-center space-x-4 absolute top-0 left-14  ${
             openTools ? "visible" : "invisible"
           }`}
         >
           <span
+            onClick={InserImageComp}
             className={`border-[1.5px] border-green-500 rounded-full block p-[6px] ${
               openTools ? "scale-100 visible" : "scale-0 invisible"
             } ease-linear duration-100 bg-white cursor-pointer`}
-            onClick={insertImageComp}
           >
-            <Image size={20} className="opacity-60 text-green-800" />
+            <Image size={20} className="opacity-60 text-green-800 " />
             <input
               type="file"
               accept="image/*"
@@ -242,20 +260,20 @@ const NewStory = ({ storyId }: Props) => {
             />
           </span>
           <span
-            onClick={insertDivider}
+            onClick={InserDivider}
             className={`border-[1.5px] border-green-500 rounded-full block p-[6px] ${
               openTools ? "scale-100 visible" : "scale-0 invisible"
             } ease-linear duration-100 delay-75 bg-white cursor-pointer`}
           >
-            <MoreHorizontal size={20} className="opacity-60 text-green-800" />
+            <MoreHorizontal size={20} className="opacity-60 text-green-800 " />
           </span>
           <span
-            onClick={insertCodeBlock}
+            onClick={InserCodeBlock}
             className={`border-[1.5px] border-green-500 rounded-full block p-[6px] ${
               openTools ? "scale-100 visible" : "scale-0 invisible"
             } ease-linear duration-100 delay-100 bg-white cursor-pointer`}
           >
-            <Code size={20} className="opacity-60 text-green-800" />
+            <Code size={20} className="opacity-60 text-green-800 " />
           </span>
         </div>
       </div>
@@ -265,127 +283,139 @@ const NewStory = ({ storyId }: Props) => {
 
 export default NewStory;
 
-// add image to cloudinary and get the secure URL component
-// const ImageBlock = ({ imageUrl, file }: { imageUrl: string; file: File }) => {
-//   const [currentImageUrl, setCurrentImageUrl] =
-//     React.useState<string>(imageUrl);
+const ImageComp = ({
+  imageUrl,
+  file,
+  handleSave,
+}: {
+  imageUrl: string;
+  file: File;
+  handleSave: () => void;
+}) => {
+  const [currentImageUrl, setCurrentImageUrl] = useState<string>(imageUrl);
 
-//   const updateImageUrl = async () => {
-//     try {
-//       const formData = new FormData();
-//       formData.append("file", file);
-//       imageUpload(formData).then(
-//         (secureImageUrl) => setCurrentImageUrl(secureImageUrl)
-//       );
-//     } catch (error) {
-//       console.error("Error uploading image:", error);
-//     }
-//   };
+  const updateImageUrl = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      await imageUpload(formData).then((SecureImageUrl) =>
+        setCurrentImageUrl(SecureImageUrl)
+      );
+    } catch (error) {
+      console.log("Error uplaoding the image", error);
+    }
+  };
 
-//   useEffect(() => {
-//     updateImageUrl();
-//   }, [imageUrl]);
-//   return (
-//     <div className="py-3">
-//       <div>
-//         <img
-//           src={currentImageUrl}
-//           alt={currentImageUrl}
-//           className="max-w-full h-[450px]"
-//         />
-//         <div className="text-center text-sm max-w-md mx-auto">
-//           <p data-p-placeholder="Type caption for your image"></p>
-//         </div>
-//       </div>
-//       <p data-p-placeholder="..."></p>
-//     </div>
-//   );
-// };
+  useEffect(() => {
+    updateImageUrl().then(() => {
+      handleSave();
+    });
+  }, [imageUrl]);
+  return (
+    <div className="py-3">
+      <div>
+        <img
+          src={currentImageUrl}
+          alt="Image"
+          className="max-w-full h-[450px]"
+        />
+        <div className="text-center text-sm max-w-md mx-auto">
+          <p data-p-placeholder="Type caption for your image"></p>
+        </div>
+      </div>
+      <p data-p-placeholder="..."></p>
+    </div>
+  );
+};
 
-// Divider component to separate the content in the editor
-// const Divider = () => {
-//   return (
-//     <div className="py-3 w-full">
-//       <div
-//         className="text-center flex items-center justify-center "
-//         contentEditable={false}
-//       >
-//         <MoreHorizontal size={32} />
-//       </div>
-//       <p data-p-placeholder="Write your text ..."></p>
-//     </div>
-//   );
-// };
+const Divider = () => {
+  return (
+    <div className="py-3 w-full">
+      <div
+        className="text-center flex items-center justify-center "
+        contentEditable={false}
+      >
+        <MoreHorizontal size={32} />
+      </div>
+      <p data-p-placeholder="Write your text ..."></p>
+    </div>
+  );
+};
 
-// const CodeBlock = () => {
-//   const [language, setLanguage] = React.useState<string>("javascript");
-//   const [code, setCode] = React.useState<string>("");
-//   const [highlightedCode, setHighlightedCode] = useState<string>("");
+const CodeBlock = ({ handleSave }: { handleSave: () => void }) => {
+  const [language, setlanguage] = useState<string>("javascript");
+  const [code, setCode] = useState<string>("");
+  const [highlightedCode, sethighlightedCode] = useState<string>("");
 
-//   console.log(code);
+  console.log(code);
 
-//   const handleLanguageChange = (
-//     event: React.ChangeEvent<HTMLSelectElement>
-//   ) => {
-//     setLanguage(event.target.value);
-//   };
+  const handlelanguageChange = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    setlanguage(event.target.value);
+  };
 
-//   const handleCodeChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-//     event.preventDefault();
-//     setCode(event.currentTarget.value || "");
-//   };
+  const handleCodeChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    event.preventDefault();
+    setCode(event.currentTarget.value || "");
+  };
 
-//   const handlePaste = async () => {
-//     try {
-//       const clipboardData = await navigator.clipboard.readText();
-//       console.log(clipboardData);
+  const handlePaste = async () => {
+    try {
+      const clipboardData = await navigator.clipboard.readText();
+      console.log(clipboardData);
 
-//       setCode((prev) => prev + clipboardData);
-//     } catch (error) {
-//       console.log(error);
-//     }
-//   };
+      setCode((prev) => prev + clipboardData);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-//   useEffect(() => {
-//     const highlighted = hljs.highlight(code, {
-//       language,
-//       ignoreIllegals: true,
-//     }).value;
-//     setHighlightedCode(highlighted);
-//   }, [language, code, highlightedCode]);
+  useEffect(() => {
+    const highlighted = hljs.highlight(code, {
+      language,
+      ignoreIllegals: true,
+    }).value;
+    sethighlightedCode(highlighted);
+    handleSave();
+  }, [language, code, highlightedCode]);
 
-//   return (
-//     <div className="w-full">
-//       <div className="prose w-full relative bg-gray-50 rounded-sm p-5 focus:outline-none">
-//         <div>
-//           <select
-//             contentEditable={false}
-//             className="bg-gray-100 border-dotted border-[2px] rounded-sm p-1 text-stone-700"
-//             defaultValue={language}
-//             onChange={handleLanguageChange}
-//           >
-//             <option value="javascript">JavaScript</option>
-//             <option value="python">Python</option>
-//             <option value="java">Java</option>
-//           </select>
-//         </div>
-//         <textarea
-//           className="focus:outline-none p-2 w-full mt-4"
-//           onChange={handleCodeChange}
-//         />
-//         <button
-//           onClick={handlePaste}
-//           className="absolute top-2 right-2 cursor-pointer"
-//         >
-//           <ClipboardPaste />
-//         </button>
-//         <div
-//           className={`language-${language} text-base block overflow-auto p-3 focus:outline-none`}
-//           dangerouslySetInnerHTML={{ __html: highlightedCode }}
-//           style={{ whiteSpace: "pre-wrap" }}
-//         ></div>
-//       </div>
-//       <p data-p-placeholder="Write your text ..."></p>
-//     </div>
-//   );
-// };
+  return (
+    <div className="w-full">
+      <div className="w-full relative bg-stone-100 rounded-sm p-5 focus:outline-none">
+        <div>
+          <select
+            contentEditable={false}
+            className="bg-gray-100 border-dotted border-[2px] rounded-sm p-1 text-stone-700"
+            defaultValue={language}
+            onChange={handlelanguageChange}
+          >
+            <option value="javascript">JavaScript</option>
+            <option value="python">Python</option>
+            <option value="java">Java</option>
+          </select>
+        </div>
+        <textarea
+          className="focus:outline-none p-2 w-full mt-4"
+          onChange={(e) => {
+            e.preventDefault();
+            handleCodeChange(e);
+          }}
+          onPaste={handlePaste}
+        />
+        <button
+          onClick={handlePaste}
+          className="absolute top-2 right-2 cursor-pointer"
+        >
+          <ClipboardPaste />
+        </button>
+        <div
+          className={`language-${language} text-base block overflow-auto p-3 focus:outline-none`}
+          dangerouslySetInnerHTML={{ __html: highlightedCode }}
+          style={{ whiteSpace: "pre-wrap" }}
+        ></div>
+      </div>
+      <p data-p-placeholder="Write your text ..."></p>
+    </div>
+  );
+};

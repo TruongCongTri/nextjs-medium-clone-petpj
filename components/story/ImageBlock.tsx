@@ -17,8 +17,8 @@ export default function ImageBlock({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      imageUpload(formData).then(
-        (secureImageUrl) => setCurrentImageUrl(secureImageUrl) // Set the secure URL to the state
+      await imageUpload(formData).then((secureImageUrl) =>
+        setCurrentImageUrl(secureImageUrl)
       );
     } catch (error) {
       console.log("Error uplaoding the image", error);
@@ -30,7 +30,7 @@ export default function ImageBlock({
       handleSave(); // Call the handleSave function after the image is uploaded
     });
   }, [imageUrl]);
-  
+
   return (
     <div className="py-3">
       <div>

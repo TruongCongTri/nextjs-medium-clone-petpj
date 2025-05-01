@@ -2,12 +2,9 @@
 import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
-import axios from "axios";
-import { useRouter } from "next/navigation";
+import React from "react";
 
 const NavbarStory = () => {
-  const router = useRouter();
 
   return (
     <div className="px-8 py-2 border-b-[1px]">

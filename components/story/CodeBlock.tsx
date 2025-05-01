@@ -3,7 +3,7 @@ import hljs from "highlight.js";
 import { ClipboardPaste } from "lucide-react";
 import React, { useState, useEffect } from "react";
 
-export default function CodeBlock() {
+export default function CodeBlock({ handleSave }: { handleSave: () => void }) {
   const [language, setLanguage] = useState<string>("javascript");
   const [code, setCode] = useState<string>("");
   const [highlightedCode, setHighlightedCode] = useState<string>("");
@@ -38,6 +38,7 @@ export default function CodeBlock() {
       ignoreIllegals: true,
     }).value;
     setHighlightedCode(highlighted);
+    handleSave(); // Call handleSave whenever highlightedCode changes
   }, [language, code, highlightedCode]);
 
   return (
@@ -56,7 +57,7 @@ export default function CodeBlock() {
           </select>
         </div>
         <textarea
-          className="focus:outline-none p-2 w-full mt-4"
+          className="focus:outline-none p-2 w-full mt-4 bg-white"
           onChange={(e) => {
             e.preventDefault();
             handleCodeChange(e);

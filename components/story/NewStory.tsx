@@ -145,10 +145,10 @@ const NewStory = ({ storyId, storyContent }: Props) => {
     };
 
     contentEditableRef.current?.addEventListener("input", handleInput);
-  }, [debouncedHandleSave]);
+  }, []);
 
   useEffect(() => {
-    if (typeof window.document !== "undefined") {
+    if (typeof document !== "undefined") {
       const editor = new MediumEditor(".editable", {
         elementsContainer: document.getElementById("container") as HTMLElement,
         toolbar: {
@@ -164,6 +164,7 @@ const NewStory = ({ storyId, storyContent }: Props) => {
           ],
         },
       });
+
       return () => {
         editor.destroy();
       };
@@ -186,24 +187,25 @@ const NewStory = ({ storyId, storyContent }: Props) => {
     };
 
     fetchStoryById();
-  }, [storyId]);
+  }, []);
 
   console.log(Story);
 
   return (
-    <main
-      id="container"
-      className="max-w-[800px] mx-auto relative font-mono mt-8"
-    >
-      <p className="absolute -top-[72px] opacity-30">
-        {saving ? "saving..." : "saved"}
-      </p>
+    <main id="container" className="max-w-[800px] mx-auto relative font-mono mt-8">
+      {/* <Script src="js/medium-editor.js"></Script> */}
+      
+        <p className="absolute -top-[72px] opacity-30">
+          {saving ? "saving..." : "saved"}
+        </p>
+      
+
       <div
         id="editable"
         ref={contentEditableRef}
         contentEditable
         suppressContentEditableWarning
-        className="outline-none focus:outline-none editable max-w-[800px] prose"
+        className="editable outline-none focus:outline-none max-w-[800px] prose"
         style={{ whiteSpace: "pre-line" }}
       >
         {storyContent ? (

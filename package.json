@@ -12,6 +12,7 @@
     "@clerk/nextjs": "^6.18.1",
     "@prisma/client": "^6.7.0",
     "axios": "^1.9.0",
+    "highlight.js": "^11.11.1",
     "lucide": "^0.503.0",
     "lucide-react": "^0.503.0",
     "medium-editor": "^5.23.3",

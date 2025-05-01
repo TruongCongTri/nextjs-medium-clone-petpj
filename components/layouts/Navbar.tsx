@@ -7,9 +7,7 @@ import { ScrollText, Search } from "lucide-react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 
-type Props = {};
-
-const Navbar = (props: Props) => {
+const Navbar = () => {
   const [SearchInput, setSearchInput] = useState<string>("");
   const router = useRouter();
   const MakeNewStory = async () => {

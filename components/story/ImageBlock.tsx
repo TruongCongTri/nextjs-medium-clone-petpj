@@ -17,27 +17,26 @@ export default function ImageBlock({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      await imageUpload(formData).then((secureImageUrl) =>
-        setCurrentImageUrl(secureImageUrl)
+      await imageUpload(formData).then((SecureImageUrl) =>
+        setCurrentImageUrl(SecureImageUrl)
       );
     } catch (error) {
-      console.log("Error uplaoding the image", error);
+      console.log("Error uploading the image", error);
     }
   };
 
   useEffect(() => {
     updateImageUrl().then(() => {
-      handleSave(); // Call the handleSave function after the image is uploaded
+      handleSave();
     });
   }, [imageUrl]);
-
   return (
     <div className="py-3">
       <div>
         <img
           src={currentImageUrl}
           alt="Image"
-          className="max-w-full h-[450px]"
+          className="max-w-full h-[450px] mx-auto"
         />
         <div className="text-center text-sm max-w-md mx-auto">
           <p data-p-placeholder="Type caption for your image"></p>

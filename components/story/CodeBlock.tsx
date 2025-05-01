@@ -38,7 +38,7 @@ export default function CodeBlock({ handleSave }: { handleSave: () => void }) {
       ignoreIllegals: true,
     }).value;
     setHighlightedCode(highlighted);
-    handleSave(); // Call handleSave whenever highlightedCode changes
+    handleSave();
   }, [language, code, highlightedCode]);
 
   return (
@@ -57,7 +57,7 @@ export default function CodeBlock({ handleSave }: { handleSave: () => void }) {
           </select>
         </div>
         <textarea
-          className="focus:outline-none p-2 w-full mt-4 bg-white"
+          className="focus:outline-none p-2 w-full mt-4"
           onChange={(e) => {
             e.preventDefault();
             handleCodeChange(e);

@@ -14,7 +14,7 @@ export const clapCount = async (storyId: string, commentId?: string) => {
           clapCount: true,
         },
       });
-      return clap._sum?.clapCount || 0;
+      return JSON.parse(JSON.stringify(clap._sum?.clapCount || 0));
     }
     const clap = await prisma.clap.aggregate({
       where: {
@@ -26,8 +26,9 @@ export const clapCount = async (storyId: string, commentId?: string) => {
       },
     });
 
-    return clap._sum?.clapCount || 0;
+    return JSON.parse(JSON.stringify(clap._sum?.clapCount || 0));
   } catch (error) {
+    console.log("Error fetching clap count", error);
     return 0;
   }
 };
@@ -47,7 +48,7 @@ export const clapCountByUser = async (storyId: string, commentId?: string) => {
           clapCount: true,
         },
       });
-      return clap._sum?.clapCount || 0;
+      return JSON.parse(JSON.stringify(clap._sum?.clapCount || 0));
     }
     const clap = await prisma.clap.aggregate({
       where: {
@@ -60,8 +61,10 @@ export const clapCountByUser = async (storyId: string, commentId?: string) => {
       },
     });
 
-    return clap._sum?.clapCount || 0;
+    return JSON.parse(JSON.stringify(clap._sum?.clapCount || 0));
   } catch (error) {
+    console.log("Error fetching clap count by user", error);
+
     return 0;
   }
 };

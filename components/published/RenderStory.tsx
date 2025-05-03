@@ -10,6 +10,9 @@ import CommentComponent from "./CommentComponent";
 import SaveComponent from "./SaveComponent";
 import ShareComponent from "./ShareComponent";
 import { clapCount, clapCountByUser } from "../../actions/clap";
+import { checkSaved } from "@/actions/save";
+import { getCurrentUser } from "@/actions/user";
+import { numberOfComments } from "@/actions/comment";
 type Props = {
   authorFirstName: string | null;
   authorLastName: string | null;
@@ -33,11 +36,18 @@ const RenderStory = async ({
   const h1Element = h1Match ? h1Match[1] : "";
 
   const h1ElementWithoutTag = stripHtmlTags(h1Element);
+  // comment
+  const currentUser = await getCurrentUser();
 
-  //
+  // clap
   const clapCounts = await clapCount(publishedStory.id);
   const userClapCounts = await clapCountByUser(publishedStory.id);
 
+  // save
+  const savedStatus = await checkSaved(publishedStory.id);
+
+  // total number of comments
+  const totalComments = await numberOfComments(publishedStory.id);
   return (
     <div className="flex items-center justify-center mt-6 max-w-[800px] mx-auto">
       <div>
@@ -73,21 +83,21 @@ const RenderStory = async ({
               userClapCount={userClapCounts}
             />
             <CommentComponent
-            //   NumberCommnets={
-            //     NumberCommnets.reponse ? NumberCommnets.reponse : 0
-            //   }
-            //   AuthorFirstName={currentUser.firstName}
-            //   AuthorImage={currentUser.imageUrl}
-            //   AuthorLastName={currentUser.lastName}
+              totalComments={
+                totalComments.response ? totalComments.response : 0
+              }
+              authorFirstName={currentUser.firstName}
+              authorImage={currentUser.imageUrl}
+              authorLastName={currentUser.lastName}
             />
           </div>
           <div className="flex items-center space-x-4">
             <SaveComponent
-            //   storyId={publishedStory.id}
-            //   SavedStatus={savedStatus.Status}
+              storyId={publishedStory.id}
+              savedStatus={savedStatus.status}
             />
             <ShareComponent />
-            <button>
+            <button className="cursor-pointer">
               <MoreHorizontal size={24} className="opacity-80 text-green-800" />
             </button>
           </div>

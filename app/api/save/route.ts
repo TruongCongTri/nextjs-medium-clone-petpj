@@ -1,10 +1,12 @@
 import prisma from "@/app/prismadb";
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse, NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   const { userId }: { userId: string | null } = await auth();
-  if (!userId) throw new Error("No user found");
+  if (!userId) {
+    return NextResponse.json("User not present");
+  }
 
   try {
     const { storyId } = await request.json();
@@ -19,38 +21,35 @@ export async function POST(request: NextRequest) {
       throw new Error("Story does not exist");
     }
 
-    const clapped = await prisma.clap.findFirst({
+    const savedCheck = await prisma.save.findFirst({
       where: {
         storyId,
         userId,
       },
     });
 
-    if (clapped && clapped.clapCount < 50) {
-      await prisma.clap.update({
+    if (savedCheck) {
+      // If already saved, delete the existing save
+      await prisma.save.delete({
         where: {
-          id: clapped.id,
-        },
-        data: {
-          clapCount: clapped.clapCount + 1,
+          id: savedCheck.id,
         },
       });
 
-      // return NextResponse.json("Clap updated!");
-      return NextResponse.json({ message: "Clap updated" });
+      return NextResponse.json({ message: "Story removed from saved stories" });
     } else {
-      const clapStory = await prisma.clap.create({
+      // If not saved, save the story
+      const saveStory = await prisma.save.create({
         data: {
           userId,
           storyId: storyExist.id,
-          clapCount: 1,
         },
       });
-      // return NextResponse.json("Clap created");
-      return NextResponse.json(clapStory);
+
+      return NextResponse.json(saveStory);
     }
   } catch (error) {
-    console.log("Error clapping story", error);
+    console.error("Error saving story:", error);
     return NextResponse.error();
   }
 }

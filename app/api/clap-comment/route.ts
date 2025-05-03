@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   if (!userId) throw new Error("No user found");
 
   try {
-    const { storyId } = await request.json();
+    const { storyId, commentId } = await request.json();
 
     const storyExist = await prisma.story.findUnique({
       where: {
@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
       where: {
         storyId,
         userId,
+        commentId
       },
     });
 
@@ -44,13 +45,14 @@ export async function POST(request: NextRequest) {
           userId,
           storyId: storyExist.id,
           clapCount: 1,
+          commentId
         },
       });
       // return NextResponse.json("Clap created");
       return NextResponse.json(clapStory);
     }
   } catch (error) {
-    console.log("Error clapping story", error);
+    console.log("Error clapping comment", error);
     return NextResponse.error();
   }
 }

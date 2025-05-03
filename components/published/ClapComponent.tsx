@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 type Props = {
@@ -23,6 +23,11 @@ const ClapComponent = ({
   const [showPopup, setShowPopup] = useState<boolean>(false);
 
   useEffect(() => {
+    setCurrentUserClapCount(userClapCount)
+    setCurrentClapCount(clapCount)
+},[userClapCount, clapCount])
+
+  useEffect(() => {
     const timeout = setTimeout(() => {
       setShowPopup(false);
     }, 1000);
@@ -43,7 +48,7 @@ const ClapComponent = ({
           storyId,
         });
       } else {
-        await axios.post("/api/clapcomment", {
+        await axios.post("/api/clap-comment", {
           storyId,
           commentId,
         });
@@ -55,13 +60,17 @@ const ClapComponent = ({
       setCurrentUserClapCount((prev) => prev - 1);
     }
   };
+
+  
+
+  
   return (
     <button
       onClick={(e) => {
         e.preventDefault();
         clapStoryComment();
       }}
-      className="flex items-center relative"
+      className="flex items-center relative cursor-pointer"
     >
       <span
         className={`absolute bottom-10 w-[40px] h-[40px] bg-black rounded-full shadow-2xl shadow-neutral-300 text-white flex items-center justify-center duration-75 ease-in ${

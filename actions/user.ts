@@ -10,11 +10,11 @@ export const getCurrentUser = async () => {
   const { userId } = await auth();
   if (!userId) throw new Error("User not authenticated");
   const user = await (await clerkClient()).users.getUser(userId);
-  return user;
+  return JSON.parse(JSON.stringify(user))
 };
 
 export const getPublishedUser = async (userId: string) => {
   if (!userId) throw new Error("User not authenticated");
   const user = await (await clerkClient()).users.getUser(userId);
-  return user;
+  return JSON.parse(JSON.stringify(user));
 };

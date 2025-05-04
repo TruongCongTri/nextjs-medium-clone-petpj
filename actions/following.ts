@@ -17,3 +17,16 @@ export const checkFollowing = async (authorId: string) => {
     return { isFollowing: false };
   }
 };
+
+export const numberOfFollowers = async (authorId: string) => {
+  try {
+    const num = await prisma.following.aggregate({
+      where: { followingId: authorId },
+      _count: true,
+    });
+
+    return { followers: JSON.parse(JSON.stringify(num._count)) };
+  } catch (error) {
+    return { followers: 0 };
+  }
+};

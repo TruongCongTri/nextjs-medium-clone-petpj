@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 const Navbar = () => {
   const [SearchInput, setSearchInput] = useState<string>("");
   const router = useRouter();
-  const MakeNewStory = async () => {
+  const makeNewStory = async () => {
     try {
       const response = await axios.post("/api/new-story");
       router.push(`/story/${response.data.id}`);
@@ -54,7 +54,7 @@ const Navbar = () => {
         </div>
         <div className="flex items-center space-x-7">
           <span
-            onClick={MakeNewStory}
+            onClick={makeNewStory}
             className="flex items-center space-x-2 opacity-70 hover:opacity-100 duration-100 ease-in cursor-pointer"
           >
             <svg

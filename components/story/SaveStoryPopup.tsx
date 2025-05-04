@@ -31,6 +31,7 @@ const SaveStoryPopup = ({
         const result = await getStoryById(storyId);
         if (result.response) {
           setStory(result.response);
+          
         }
       } catch (error) {
         console.log(`Error fetching story:`, error);

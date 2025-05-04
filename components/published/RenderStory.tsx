@@ -4,7 +4,6 @@ import React from "react";
 import FollowComponent from "./FollowComponent";
 import { MoreHorizontal } from "lucide-react";
 
-import "highlight.js/styles/github.css";
 import ClapComponent from "./ClapComponent";
 import CommentComponent from "./CommentComponent";
 import SaveComponent from "./SaveComponent";
@@ -13,6 +12,9 @@ import { clapCount, clapCountByUser } from "../../actions/clap";
 import { checkSaved } from "@/actions/save";
 import { getCurrentUser } from "@/actions/user";
 import { numberOfComments } from "@/actions/comment";
+
+import "highlight.js/styles/github.css"
+
 type Props = {
   authorFirstName: string | null;
   authorLastName: string | null;
@@ -48,6 +50,20 @@ const RenderStory = async ({
 
   // total number of comments
   const totalComments = await numberOfComments(publishedStory.id);
+
+  //render content
+  const content = publishedStory.content!;
+  const firstH1Match = content.match(/<h1[^>]*>[\s\S]*?<\/h1>/);
+
+  const sanitizedContent = firstH1Match
+    ? content.replace(firstH1Match[0], "")
+    : content;
+
+  const finalSanitizedContent = sanitizedContent.replace(
+    /<h1[^>]*>[\s\S]*?<\/h1>|<select[^>]*>[\s\S]*?<\/select>|<textarea[^>]*>[\s\S]*?<\/textarea>/gi,
+    ""
+  );
+
   return (
     <div className="flex items-center justify-center mt-6 max-w-[800px] mx-auto">
       <div>
@@ -102,7 +118,10 @@ const RenderStory = async ({
             </button>
           </div>
         </div>
-        {/* <div className='prose my-5 font-mono' dangerouslySetInnerHTML={{__html:finalSanitizedContent}}></div> */}
+        <div
+          className="prose my-5 font-mono max-w-[800px]"
+          dangerouslySetInnerHTML={{ __html: finalSanitizedContent }}
+        ></div>
       </div>
     </div>
   );

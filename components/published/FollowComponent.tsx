@@ -47,14 +47,14 @@ const FollowComponent = ({ authorId }: Props) => {
     }
   };
   return (
-    <span
+    <button
       onClick={followAuthor}
-      className={`font-medium cursor-pointer ${
-        isFollowed ? "text-green-700" : "text-red-400"
+      className={`py-2 px-4 p-2 rounded-full text-sm text-white cursor-pointer ${
+        isFollowed ? "bg-green-600 hover:bg-green-700" : "bg-orange-600 hover:bg-orange-700"
       } ${currentUserId === authorId ? "hidden" : ""}`}
     >
-      . {`${isFollowed ? "followed" : "follow"}`}
-    </span>
+      {`${isFollowed ? "Followed" : "Follow"}`}
+    </button>
   );
 };
 

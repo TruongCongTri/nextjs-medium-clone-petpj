@@ -24,6 +24,7 @@ const CommentComponent = ({
   const pathname = usePathname();
   const storyId = pathname.split("/")?.[2] as string;
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [comments, setComments] = useState<Comments[]>([]);
   const [refetchComment, setRefetchComment] = useState<boolean>(false);
 

@@ -3,6 +3,7 @@ import Navbar from "@/components/layouts/Navbar";
 import { getPublishedStoryById } from "@/actions/getStories";
 import { getPublishedUser } from "@/actions/user";
 import RenderStory from "@/components/published/RenderStory";
+import AuthorSpecific from "@/components/published/AuthorSpecific";
 export default async function PublishedStoryPage({
   params,
 }: {
@@ -24,6 +25,13 @@ export default async function PublishedStoryPage({
         authorFirstName={author.firstName}
         authorLastName={author.lastName}
         authorImage={author.imageUrl}
+        publishedStory={publishedStory.response}
+      />
+      <AuthorSpecific
+        authorFirstName={author.firstName}
+        authorLastName={author.lastName}
+        authorImage={author.imageUrl}
+        authorEmail={author.emailAddresses[0].emailAddress}
         publishedStory={publishedStory.response}
       />
     </div>

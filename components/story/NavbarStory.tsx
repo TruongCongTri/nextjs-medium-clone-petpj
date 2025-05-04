@@ -29,6 +29,11 @@ const NavbarStory = ({
         storyId,
         topics,
       });
+      if (!response) {
+        console.log(`error publishing story`);
+      }
+      console.log(`successfully publish story`);
+
       router.push(`/published/${response.data.id}`);
     } catch (error) {
       console.log(`Error publishing story:`, error);

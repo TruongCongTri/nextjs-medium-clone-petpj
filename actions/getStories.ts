@@ -37,3 +37,23 @@ export const getPublishedStoryById = async (storyId: string) => {
     return { error: "Error fetching story by ID" };
   }
 };
+
+export const getStoriesByAuthor = async (storyId: string, authorId: string) => {
+  try {
+    const authorStories = await prisma.story.findMany({
+      where: {
+        authorId,
+        NOT: {
+          id: storyId,
+        },
+        publish: true,
+      },
+    });
+
+    return { response: authorStories };
+  } catch (error) {
+    console.log("error getting stories by author", error);
+
+    return { error: "Error on getting stories by author" };
+  }
+};
